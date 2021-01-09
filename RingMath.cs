@@ -9,6 +9,7 @@ using UnityEngine;
 [RequireComponent(typeof(MeshRenderer))]
 public class RingMath : MonoBehaviour
 {
+    public bool animate;                            // toggle animation
     [Range(1, 100)] public int n = 20;              // number of points around the circle
     [Range(2, 100)] public float m = 3;             // multiplicator
     [Range(1f, 100f)] public float speed = 2;       // speed of the animation
@@ -34,8 +35,14 @@ public class RingMath : MonoBehaviour
         mf = GetComponent<MeshFilter>();
         mf.mesh = mesh = new Mesh();
         mesh.name = "Times Circle Procedural Mesh";
+        
+        if (!animate)
+        {
+            mesh.Clear();
+            GenerateMesh();
+        }
     }
-    
+
     /// <summary>
     /// Gets called before start and when values in the inspector change.
     /// </summary>
@@ -48,22 +55,19 @@ public class RingMath : MonoBehaviour
         // calculate the points around the circle here, so they dont have to be calculated every frame.
         for (int i = 0; i < n; i++)
             a_points[i] = Polar(radius, 360f * i / n);
+        
+        if (!animate && mesh != null)
+        {
+            mesh.Clear();
+            GenerateMesh();
+        }
     }
 
     /// <summary>
-    /// Gets called on every frame of the gameloop.
+    /// Generates and draws the mesh.
     /// </summary>
-    private void Update()
+    private void GenerateMesh()
     {
-        // animation
-        m = Mathf.Clamp(m, 0, n);
-        current_m += animation_direction * step;
-        if (current_m >= m || current_m <= 0)
-        {
-            current_m = Mathf.Clamp(current_m, 0, m);
-            animation_direction *= -1;
-        }
-        
         // calculate new mesh
         mesh.Clear();
         for (int i = 0; i < n; i++)
@@ -76,6 +80,25 @@ public class RingMath : MonoBehaviour
                 CircleMeshFromLine(a, b, circleSegments);
             else
                 AddLine(a,b);
+        }
+    }
+
+    /// <summary>
+    /// Gets called on every frame of the gameloop.
+    /// </summary>
+    private void Update()
+    {
+        if (animate)// no need to do this every frame if theres no animation.
+        {
+            // animation
+            m = Mathf.Clamp(m, 0, n);
+            current_m += animation_direction * step;
+            if (current_m >= m || current_m <= 0)
+            {
+                current_m = Mathf.Clamp(current_m, 0, m);
+                animation_direction *= -1;
+            }
+            GenerateMesh();
         }
     }
 
